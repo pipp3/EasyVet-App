@@ -43,9 +43,6 @@ coverage/
 .pnp.*
 .pnp.js
 
-# Package lock files
-package-lock.json
-yarn.lock
 
 # Temporary files
 *.tmp
