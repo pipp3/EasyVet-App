@@ -1,7 +1,7 @@
 import Layout from "./Layout";
 import { Link } from "react-router-dom";
 
-export default function Login() {
+export default function ChangePassword() {
   return (
     <div>
       <Layout>
@@ -10,65 +10,45 @@ export default function Login() {
             <div className="flex items-center w-full max-w-lg p-8 mx-auto lg:px-12 lg:w-2/5 bg-white rounded-lg shadow-lg">
               <div className="w-full">
                 <h1 className="text-3xl font-semibold tracking-wider font-serif text-blue-600 capitalize">
-                  Inicia Sesión
+                  Cambiar Contraseña
                 </h1>
                 <p className="mt-4 text-gray-700">
-                  Bienvenido de vuelta. Inicia sesión para acceder a tu cuenta.
+                  Ingresa tu nueva contraseña para actualizar tu cuenta.
                 </p>
 
                 <form className="grid grid-cols-1 gap-6 mt-8">
                   <div>
                     <label
                       className="block mb-2 text-sm text-gray-600"
-                      htmlFor="email"
+                      htmlFor="newPassword"
                     >
-                      Email
+                      Nueva Contraseña
                     </label>
                     <input
-                      type="email"
-                      id="email"
-                      placeholder="tucorreo@ejemplo.com"
+                      type="password"
+                      id="newPassword"
+                      placeholder="Ingresa nueva contraseña"
                       className="block w-full px-4 py-3 mt-2 text-gray-800 placeholder-gray-400 bg-white border border-gray-300 rounded-lg focus:border-blue-500 focus:ring focus:ring-blue-500 focus:outline-none"
                       required
-                      aria-label="Email"
+                      aria-label="Nueva Contraseña"
                     />
                   </div>
 
                   <div>
                     <label
                       className="block mb-2 text-sm text-gray-600"
-                      htmlFor="password"
+                      htmlFor="confirmPassword"
                     >
-                      Contraseña
+                      Confirmar Nueva Contraseña
                     </label>
                     <input
                       type="password"
-                      id="password"
-                      placeholder="Ingresa tu contraseña"
+                      id="confirmPassword"
+                      placeholder="Confirma la nueva contraseña"
                       className="block w-full px-4 py-3 mt-2 text-gray-800 placeholder-gray-400 bg-white border border-gray-300 rounded-lg focus:border-blue-500 focus:ring focus:ring-blue-500 focus:outline-none"
                       required
-                      aria-label="Contraseña"
+                      aria-label="Confirmar Nueva Contraseña"
                     />
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id="remember"
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                      />
-                      <label
-                        htmlFor="remember"
-                        className="ml-2 text-sm text-gray-600"
-                      >
-                        Recuérdame
-                      </label>
-                    </div>
-                    <Link to="/forgot-password" className="text-sm text-blue-600 hover:underline">
-                        ¿Olvidaste tu contraseña?
-                    </Link>
-                   
                   </div>
 
                   <button
@@ -76,16 +56,9 @@ export default function Login() {
                     className="w-full px-6 py-3 mt-4 text-white bg-blue-600 rounded-lg hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 focus:ring-opacity-50 transition duration-300"
                   >
                     <span className="uppercase font-semibold">
-                      Iniciar Sesión
+                      Actualizar Contraseña
                     </span>
                   </button>
-
-                  <p className="mt-4 text-sm text-center text-gray-600">
-                    ¿No tienes cuenta?{" "}
-                    <Link to="/register" className="text-blue-600 hover:underline">
-                      Regístrate
-                    </Link>
-                  </p>
                 </form>
               </div>
             </div>
