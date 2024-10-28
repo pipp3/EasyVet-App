@@ -137,21 +137,33 @@ router.post("/reset-password/:token", async (req, res) => {
 router.post("/confirm-account/:token", async (req, res) => {
   const { token } = req.params;
   try {
+    // Verifica el token
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    // Busca al usuario en la base de datos
     const user = await User.findOne({ where: { id: decoded.id } });
     if (!user) {
+      // Si no se encuentra el usuario, envía una respuesta y termina la ejecución
       return res.status(404).json({ message: "Usuario no encontrado" });
     }
+    
+    // Marca la cuenta como confirmada y guarda los cambios
     user.confirmado = true;
     await user.save();
-    res.json({ message: "Cuenta confirmada con éxito" });
+    
+    // Envía la respuesta de éxito
+    return res.json({ message: "Cuenta confirmada con éxito" }); // Asegúrate de usar return aquí
   } catch (error) {
     console.error(error);
+    
+    // Maneja errores específicos
     if (error.name === "TokenExpiredError") {
-      return res.status(400).json({ message: "El token ha expirado" });
+      return res.status(400).json({ message: "El token ha expirado" }); // Retorna aquí también
     }
-    res.status(500).json({ message: "Error al confirmar la cuenta" });
+    
+    // Respuesta de error genérica
+    return res.status(500).json({ message: "Error al confirmar la cuenta" }); // Usa return
   }
 });
+
 
 export default router;

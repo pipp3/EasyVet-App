@@ -1,31 +1,22 @@
-import nodemailer from "nodemailer";
 import dotenv from "dotenv";
-
+import {Resend} from 'resend'
 dotenv.config();
 
-const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-        user: process.env.GOOGLE_EMAIL,
-        pass: process.env.GOOGLE_PASSWORD
-    }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 
 export const sendEmail = async (email, subject, text) => {
-    const mailOptions = {
-        from: 'noreply@easyvet.com',
-        to: email,
-        subject,
-        text
-    };
-    try {
-        await transporter.sendMail(mailOptions);
-        console.log("Email enviado con éxito a: ", email);
-    } catch (error) {
-        console.error("Error al enviar el email: ", error);
-        throw new Error("No se pudo enviar el email");
-    }
-
+    const { data, error } = await resend.emails.send({
+        from: 'Acme <onboarding@resend.dev>',
+        to: [email],
+        subject: subject,
+        html: text,
+      });
+      if (error) {
+        console.error(error);
+      } else {
+        console.log(data);
+      }
 }
 
-export default transporter;
+
