@@ -14,13 +14,21 @@ function App() {
     <div className="bg-white">
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route
+            path="/"
+            element={
+              <ProtectedRoute>
+                <Home />
+              </ProtectedRoute>
+            }
+          />
+
           <Route path="/register" element={<Register />} />
           <Route path="/login" element={<Login />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route element={<ProtectedRoute />} >
-            <Route path="/change-password/:token" element={<ChangePassword />} />
-          </Route>
+
+          <Route path="/change-password/:token" element={<ChangePassword />} />
+
           <Route path="/confirm-account/:token" element={<ConfirmAccount />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

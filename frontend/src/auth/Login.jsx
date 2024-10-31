@@ -1,7 +1,109 @@
 import Layout from "./Layout";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { useState } from "react";
+import axios from "axios";
+import iziToast from "iziToast";
+import Cookies from "js-cookie";
+import Swal from "sweetalert2";
+import "izitoast/dist/css/iziToast.css";
 
 export default function Login() {
+  const navigate = useNavigate();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    watch,
+  } = useForm();
+  const [showPassword, setShowPassword] = useState(false);
+  const password = watch("password");
+  const onSubmit = async (data) => {
+    try {
+      Swal.fire({
+        title: "Iniciando sesión...",
+        text: "Por favor, espera.",
+        didOpen: () => {
+          Swal.showLoading();
+        },
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+      });
+  
+      // Hacemos la solicitud después de un breve retraso
+      setTimeout(async () => {
+        try {
+          const response = await axios.post("http://localhost:3000/api/auth/login", data);
+          
+          Swal.close(); // Cierra el popup de carga
+  
+          Cookies.set("token", response.data.token, { expires: 7 });
+          iziToast.success({
+            title: "¡Éxito!",
+            message: "Inicio de sesión exitoso.",
+            position: "topRight",
+          });
+          navigate("/");
+          
+        } catch (error) {
+          Swal.close(); // Cierra el popup de carga en caso de error
+  
+          if (error.response) {
+            const { status, data } = error.response;
+  
+            // Manejo específico de códigos de error
+            if (status === 400) {
+              Swal.fire({
+                icon: "error",
+                title: "Contraseña incorrecta",
+                text: "La contraseña ingresada es incorrecta.",
+                confirmButtonText: "Aceptar",
+              });
+            } else if (status === 404) {
+              Swal.fire({
+                icon: "error",
+                title: "Email no registrado",
+                text: "El correo ingresado no está registrado.",
+                confirmButtonText: "Aceptar",
+              });
+            } else if (status === 500) {
+              Swal.fire({
+                icon: "error",
+                title: "Error del Servidor",
+                text: data.error || "Ocurrió un problema en el servidor. Inténtalo más tarde.",
+                confirmButtonText: "Aceptar",
+              });
+            } else {
+              // Manejo de otros errores
+              Swal.fire({
+                icon: "error",
+                title: "¡Error!",
+                text: "Error desconocido. Inténtalo de nuevo.",
+                confirmButtonText: "Aceptar",
+              });
+            }
+          } else {
+            // Caso en que no haya respuesta del servidor
+            Swal.fire({
+              icon: "error",
+              title: "Error de red",
+              text: "No se pudo conectar con el servidor. Verifica tu conexión e inténtalo nuevamente.",
+              confirmButtonText: "Aceptar",
+            });
+          }
+        }
+      }, 1000); // Pequeño retraso de 1 segundo antes de hacer la solicitud
+    } catch (error) {
+      // Manejo de errores en caso de que falle la lógica de envío de solicitud
+      Swal.fire({
+        icon: "error",
+        title: "¡Error!",
+        text: "Error desconocido. Inténtalo de nuevo.",
+        confirmButtonText: "Aceptar",
+      });
+      console.error("Error en onSubmit:", error);
+    }
+  };
   return (
     <div>
       <Layout>
@@ -16,7 +118,10 @@ export default function Login() {
                   Bienvenido de vuelta. Inicia sesión para acceder a tu cuenta.
                 </p>
 
-                <form className="grid grid-cols-1 gap-6 mt-8">
+                <form
+                  className="grid grid-cols-1 gap-6 mt-8"
+                  onSubmit={handleSubmit(onSubmit)}
+                >
                   <div>
                     <label
                       className="block mb-2 text-sm text-gray-600"
@@ -27,11 +132,28 @@ export default function Login() {
                     <input
                       type="email"
                       id="email"
+                      {...register("email", {
+                        required: "El email es obligatorio.",
+                        pattern: {
+                          value: /^\S+@\S+$/i,
+                          message: "Debe ingresar un email válido.",
+                        },
+                        maxLength: {
+                          value: 80,
+                          message:
+                            "El email no puede tener más de 80 caracteres.",
+                        },
+                      })}
                       placeholder="tucorreo@ejemplo.com"
                       className="block w-full px-4 py-3 mt-2 text-gray-800 placeholder-gray-400 bg-white border border-gray-300 rounded-lg focus:border-blue-500 focus:ring focus:ring-blue-500 focus:outline-none"
-                      required
-                      aria-label="Email"
+                      aria-label="E
+                      mail"
                     />
+                    {errors["email"] && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors["email"].message}
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -42,13 +164,26 @@ export default function Login() {
                       Contraseña
                     </label>
                     <input
-                      type="password"
+                      type={showPassword ? "text" : "password"}
                       id="password"
+                      {...register("password", {
+                        required: "La contraseña es obligatoria.",
+                      })}
                       placeholder="Ingresa tu contraseña"
                       className="block w-full px-4 py-3 mt-2 text-gray-800 placeholder-gray-400 bg-white border border-gray-300 rounded-lg focus:border-blue-500 focus:ring focus:ring-blue-500 focus:outline-none"
-                      required
                       aria-label="Contraseña"
                     />
+                    <span
+                      className="text-sm cursor-pointer text-blue-500"
+                      onClick={() => setShowPassword(!showPassword)}
+                    >
+                      {showPassword ? "Ocultar" : "Mostrar"} contraseña
+                    </span>
+                    {errors["password"] && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {errors["password"].message}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -65,10 +200,12 @@ export default function Login() {
                         Recuérdame
                       </label>
                     </div>
-                    <Link to="/forgot-password" className="text-sm text-blue-600 hover:underline">
-                        ¿Olvidaste tu contraseña?
+                    <Link
+                      to="/forgot-password"
+                      className="text-sm text-blue-600 hover:underline"
+                    >
+                      ¿Olvidaste tu contraseña?
                     </Link>
-                   
                   </div>
 
                   <button
@@ -82,7 +219,10 @@ export default function Login() {
 
                   <p className="mt-4 text-sm text-center text-gray-600">
                     ¿No tienes cuenta?{" "}
-                    <Link to="/register" className="text-blue-600 hover:underline">
+                    <Link
+                      to="/register"
+                      className="text-blue-600 hover:underline"
+                    >
                       Regístrate
                     </Link>
                   </p>

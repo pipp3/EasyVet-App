@@ -1,15 +1,46 @@
-import { Navigate, Outlet, useParams } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
+import {jwtDecode} from 'jwt-decode';
+import iziToast from "izitoast";
+import { useEffect } from 'react';
+import "izitoast/dist/css/iziToast.css";
 
-const ProtectedRoute = () => {
-  const { token } = useParams();
+export default function ProtectedRoute ({ children }) {
+ const navigate = useNavigate();
+ 
+ useEffect(() => {
+  const token = Cookies.get('token');
 
-  // Si el token no existe, redirige a una página de error o inicio de sesión
   if (!token) {
-    return <Navigate to="*" replace />;
+    iziToast.error({
+      title: "¡Error!",
+      message: "No se encontró ningún token válido.",
+      onClosing: () => navigate('/login')
+    });
+    return; // Salimos de la función useEffect para evitar ejecutar el resto del código
   }
 
-  // Si el token existe, permite el acceso a la ruta
-  return <Outlet />;
-};
+  try {
+    const decoded = jwtDecode(token);
+    const isExpired = decoded.exp * 1000 < Date.now();
 
-export default ProtectedRoute;
+    if (isExpired) {
+      iziToast.error({
+        title: "¡Token Expirado!",
+        message: "Tu sesión ha expirado. Por favor, inicia sesión nuevamente.",
+        onClosing: () => navigate('/login')
+      });
+      Cookies.remove('token');
+    }
+  } catch (error) {
+    iziToast.error({
+      title: "¡Hubo un problema al verificar el token!",
+      message: error.message,
+      onClosing: () => navigate('/login')
+    });
+    Cookies.remove('token');
+  }
+}, []);
+
+  return children; // Si hay token, renderiza el componente hijo
+};
