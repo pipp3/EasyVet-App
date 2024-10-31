@@ -34,9 +34,9 @@ router.post("/register", async (req, res) => {
             rol: newUser.rol,
           },
           process.env.JWT_SECRET,
-          { expiresIn: "10m" }
+          { expiresIn: "120m" }
         );
-        const confirmLink = `http://localhost:3000/confirm-account/${confirmToken}`;
+        const confirmLink = `http://localhost:5173/confirm-account/${confirmToken}`;
         await sendEmail(
           newUser.email,
           "Confirma tu cuenta",
@@ -61,26 +61,33 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
+    // Verificamos si el usuario existe
     const user = await User.findOne({ where: { email } });
     if (!user) {
-      return res.status(404).json({ message: "Usuario no encontrado" });
+      return res.status(404).json({ success: false, message: "Credenciales inválidas" });
     }
+
+    // Verificamos si la contraseña es correcta
     const isMatch = await user.validPassword(password);
     if (!isMatch) {
-      return res.status(400).json({ message: "Contraseña incorrecta" });
+      return res.status(400).json({ success: false, message: "Credenciales inválidas" });
     }
+
+    // Generamos el JWT con los datos del usuario
     const token = jwt.sign(
       { id: user.id, nombres: user.nombres, email: user.email, rol: user.rol },
       process.env.JWT_SECRET,
-      { expiresIn: "12h" }
+      { expiresIn: "24h" }
     );
-    res.json({ message: "Login exitoso", token });
+
+    // Respondemos con éxito y el token
+    res.json({ success: true, message: "Login exitoso", token });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: "Error en el login" });
+    // Error en el servidor
+    console.error("Error en login:", error);
+    res.status(500).json({ success: false, message: "Error en el servidor. Inténtalo más tarde." });
   }
 });
-
 router.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
   try {
@@ -93,13 +100,15 @@ router.post("/forgot-password", async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "10m" }
     );
-    const resetLink = `http://localhost:3000/reset-password/${resetToken}`;
+    const resetLink = `http://localhost:5173/change-password/${resetToken}`;
     await sendEmail(
       user.email,
       "Restablecer tu contraseña",
       `Haz clic en el siguiente enlace para restablecer tu contraseña: ${resetLink}`
     );
-    res.json({
+    res
+    .status(201)
+    .json({
       message: "Se ha enviado un email para restablecer tu contraseña",
     });
   } catch (error) {
