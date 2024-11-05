@@ -11,38 +11,47 @@ import iziToast from 'izitoast';
 import 'izitoast/dist/css/iziToast.min.css';
 
 import { useEffect } from "react";
+import axios from 'axios';
 
-import Cookies from "js-cookie";
-import { jwtDecode } from "jwt-decode";
 
 export default function Sidebar() {
-  const naivgate = useNavigate();
+  const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(true);
   const [nombres,setNombres] = useState('');
   useEffect(() => {
-    const token = Cookies.get('token');
-    if (token) {
+    const fetchUserData = async () => {
       try {
-        const decodedToken = jwtDecode(token);
-        setNombres(decodedToken.nombres);
+        const response = await axios.get("http://localhost:3000/api/users/me", { withCredentials: true });
+        setNombres(response.data.user.nombres);
       } catch (error) {
-        console.error("Error al decodificar el token:", error);
+        console.log(error);
         iziToast.error({
           title: "Error",
           message: "No se pudo recuperar la información del usuario.",
-          position: "topRight",
+          position: "topRight"
         });
+        navigate('/login');
       }
+    };
+
+    fetchUserData();
+  }, [navigate]);
+  const handleLogout = async() => {
+    try {
+      await axios.post("http://localhost:3000/api/auth/logout", {}, { withCredentials: true });
+      iziToast.success({
+        title: 'Sesión cerrada',
+        message: 'Has cerrado sesión correctamente',
+        position: 'topRight'
+      });
+      navigate('/login');
+    } catch (error) {
+      iziToast.error({
+        title: "Error",
+        message: "Hubo un problema al cerrar sesión.",
+        position: "topRight"
+      });
     }
-  }, []);
-  const handleLogout = () => {
-    Cookies.remove('token');
-    iziToast.success({
-      title: 'Sesion cerrada',
-      message: 'Has cerrado sesion correctamente',
-      position: 'topRight'
-    });
-    naivgate('/login');
   }
   return (
     <aside

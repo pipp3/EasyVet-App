@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import axios from "axios";
-import iziToast from "iziToast";
+import iziToast from "izitoast";
 import Cookies from "js-cookie";
 import Swal from "sweetalert2";
 import "izitoast/dist/css/iziToast.css";
@@ -23,83 +23,69 @@ export default function Login() {
       Swal.fire({
         title: "Iniciando sesión...",
         text: "Por favor, espera.",
-        didOpen: () => {
-          Swal.showLoading();
-        },
+        didOpen: () => Swal.showLoading(),
         allowOutsideClick: false,
         allowEscapeKey: false,
       });
   
-      // Hacemos la solicitud después de un breve retraso
       setTimeout(async () => {
         try {
-          const response = await axios.post("http://localhost:3000/api/auth/login", data);
-          
-          Swal.close(); // Cierra el popup de carga
-  
-          Cookies.set("token", response.data.token, { expires: 7 });
-          iziToast.success({
-            title: "¡Éxito!",
-            message: "Inicio de sesión exitoso.",
-            position: "topRight",
+          const response = await axios.post("http://localhost:3000/api/auth/login", data, {
+            withCredentials: true, // Permite el envío de cookies al servidor
           });
-          navigate("/");
-          
-        } catch (error) {
-          Swal.close(); // Cierra el popup de carga en caso de error
   
+          if (response.status === 200) {
+            Swal.close(); // Cierra el popup de carga
+            iziToast.success({
+              title: "¡Éxito!",
+              message: "Inicio de sesión exitoso.",
+              position: "topRight",
+            });
+            navigate("/");
+          }
+        } catch (error) {
+          Swal.close();
           if (error.response) {
             const { status, data } = error.response;
-  
-            // Manejo específico de códigos de error
             if (status === 400) {
               Swal.fire({
                 icon: "error",
                 title: "Contraseña incorrecta",
                 text: "La contraseña ingresada es incorrecta.",
-                confirmButtonText: "Aceptar",
               });
             } else if (status === 404) {
               Swal.fire({
                 icon: "error",
                 title: "Email no registrado",
                 text: "El correo ingresado no está registrado.",
-                confirmButtonText: "Aceptar",
               });
             } else if (status === 500) {
               Swal.fire({
                 icon: "error",
                 title: "Error del Servidor",
                 text: data.error || "Ocurrió un problema en el servidor. Inténtalo más tarde.",
-                confirmButtonText: "Aceptar",
               });
             } else {
-              // Manejo de otros errores
               Swal.fire({
                 icon: "error",
                 title: "¡Error!",
                 text: "Error desconocido. Inténtalo de nuevo.",
-                confirmButtonText: "Aceptar",
               });
             }
           } else {
-            // Caso en que no haya respuesta del servidor
             Swal.fire({
               icon: "error",
               title: "Error de red",
               text: "No se pudo conectar con el servidor. Verifica tu conexión e inténtalo nuevamente.",
-              confirmButtonText: "Aceptar",
             });
           }
         }
-      }, 1000); // Pequeño retraso de 1 segundo antes de hacer la solicitud
+      }, 800);
     } catch (error) {
-      // Manejo de errores en caso de que falle la lógica de envío de solicitud
       Swal.fire({
         icon: "error",
         title: "¡Error!",
         text: "Error desconocido. Inténtalo de nuevo.",
-        confirmButtonText: "Aceptar",
       });
       console.error("Error en onSubmit:", error);
     }
