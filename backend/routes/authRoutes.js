@@ -61,33 +61,56 @@ router.post("/register", async (req, res) => {
 router.post("/login", async (req, res) => {
   const { email, password } = req.body;
   try {
-    // Verificamos si el usuario existe
     const user = await User.findOne({ where: { email } });
-    if (!user) {
-      return res.status(404).json({ success: false, message: "Credenciales inválidas" });
-    }
+    if (!user) return res.status(404).json({ success: false, message: "Credenciales inválidas" });
 
-    // Verificamos si la contraseña es correcta
     const isMatch = await user.validPassword(password);
-    if (!isMatch) {
-      return res.status(400).json({ success: false, message: "Credenciales inválidas" });
-    }
+    if (!isMatch) return res.status(400).json({ success: false, message: "Credenciales inválidas" });
 
-    // Generamos el JWT con los datos del usuario
     const token = jwt.sign(
       { id: user.id, nombres: user.nombres, email: user.email, rol: user.rol },
       process.env.JWT_SECRET,
       { expiresIn: "24h" }
     );
 
-    // Respondemos con éxito y el token
-    res.json({ success: true, message: "Login exitoso", token });
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+
+    res.json({ success: true, message: "Login exitoso" });
   } catch (error) {
-    // Error en el servidor
     console.error("Error en login:", error);
     res.status(500).json({ success: false, message: "Error en el servidor. Inténtalo más tarde." });
   }
 });
+
+router.get("/verify", async (req, res) => {
+  const token = req.cookies.token;
+  console.log(token);
+  if (!token) {
+    return res.status(401).json({ success: false, message: "No autorizado" });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    res.json({ success: true, user: decoded });
+  } catch (error) {
+    res.status(401).json({ success: false, message: "Token inválido o expirado" });
+  }
+});
+
+router.post("/logout", (req, res) => {
+  res.clearCookie("token", {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+  });
+  res.json({ success: true, message: "Logout exitoso" });
+});
+
 router.post("/forgot-password", async (req, res) => {
   const { email } = req.body;
   try {
